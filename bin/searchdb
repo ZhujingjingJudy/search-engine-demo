@@ -1,0 +1,49 @@
+#!/bin/bash
+# searchdb
+
+
+# Stop on errors
+# See https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+set -Eeuo pipefail
+set -x
+
+# Sanity check command line options
+usage() {
+  echo "Usage: $0 (create|destroy|reset)"
+}
+
+
+if [ $# -ne 1 ]; then
+  usage
+  exit 1
+fi
+
+
+# Parse argument.  $1 is the first argument
+case $1 in
+  "create")
+    if [ -e "var/search.sqlite3" ]; then
+      echo "Error: file already exists"
+      exit 1
+    fi
+    mkdir -p var/
+    sqlite3 var/search.sqlite3<search_server/search/sql/search.sql
+    ;;
+
+
+  "destroy")
+    rm -f var/search.sqlite3
+    ;;
+
+
+  "reset")
+    rm -f var/search.sqlite3
+    mkdir -p var/
+    sqlite3 var/search.sqlite3<search_server/search/sql/search.sql
+    ;;
+
+  *)
+    usage
+    exit 1
+    ;;
+esac
