@@ -78,6 +78,19 @@ madoop \
   -mapper ./map6.py \
   -reducer ./reduce6.py
 
-cp output/part-00000 ../index_server/index/inverted_index/inverted_index_0.txt
-cp output/part-00001 ../index_server/index/inverted_index/inverted_index_1.txt
-cp output/part-00002 ../index_server/index/inverted_index/inverted_index_2.txt
+#clear 
+rm -rf ../index_server/index/inverted_index
+rm -rf ../index_server/stopwords.txt
+
+mkdir ../index_server/index/inverted_index
+
+# copy the output to index_server
+cp -r ./output/* ../index_server/index/inverted_index
+cp ./stopwords.txt ../index_server/index/stopwords.txt
+
+index=0
+for file in ../index_server/index/inverted_index/*
+do
+  mv $file ../index_server/index/inverted_index/inverted_index_$index.txt
+  index=$((index+1))
+done
