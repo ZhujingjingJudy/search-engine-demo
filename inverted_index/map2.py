@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Map 2. Calculate term frequency"""
+"""maps word occurences."""
 import sys
 
 for line in sys.stdin:
-    doc_id, list_word = line
-    length = len(list_word)
-    for i in range(length):
-        print(f"{doc_id} {list_word[i]}\t1")
+    line = line.split("\t")
+    content = line[1].strip()
+    words = content.split("[")[1]
+    words = words.split("]")[0]
+    words = words.split(",")
+    for word in words:
+        sys.stdout.write(f"{line[0]} {word}\t1\n")
