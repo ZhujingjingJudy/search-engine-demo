@@ -19,7 +19,7 @@ def reduce_one_group(key, group):
     for line in group:
         count = line.partition("\t")[2]
         doc_count += int(count)
-    print(f"document number\t{doc_count}")
+    print(f"{doc_count}")
 
 
 
