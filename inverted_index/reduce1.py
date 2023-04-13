@@ -19,9 +19,9 @@ def reduce_one_group(key, group):
         combined = combined.casefold()
         combined = combined.split()
         with open('stopwords.txt', 'r') as word_file:
-            stop_words = [line for line in word_file]
-        combined = [term for term in combined if term not in stop_words]
-    print(f"{key}\t{combined}")
+            stop_words = [line.partition("\n")[0] for line in word_file]
+        newcombined = [term for term in combined if term not in stop_words]
+    print(f"{key}\t{newcombined}")
 
 
 def keyfunc(line):
