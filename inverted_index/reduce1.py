@@ -9,18 +9,22 @@ import re
 
 def reduce_one_group(key, group):
     """Reduce one group."""
-    combined =""
+    combined = ""
     for line in group:
-        title = line.partition("\t")[1]
-        body = line.partition("\t")[2]
+        txt = line.partition("\t")[2]
+        title = txt.partition("\t")[0]
+        body = txt.partition("\t")[2]
         combined = title + " " + body
         combined = re.sub(r"[^a-zA-Z0-9 ]+", "", combined)
         combined = combined.casefold()
         combined = combined.split()
         with open('stopwords.txt', 'r') as word_file:
             stop_words = [line for line in word_file]
-        combined = [term for term in combined if term not in stop_words]
-    print(f"{key}\t{combined}")
+        result = []
+        for term in combined:
+            if (term+'\n') not in stop_words:
+                result.append(term)
+    print(f"{key}\t{result}")
 
 
 def keyfunc(line):
