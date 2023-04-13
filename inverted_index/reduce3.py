@@ -12,11 +12,11 @@ def reduce_one_group(key, group):
     # print("Group:", group)
     doc_appearence = collections.defaultdict(int)
     for line in group:
-        # print(line.partition("\t")[2])
         doc_id, tf = line.partition("\t")[2].split()
         doc_appearence[doc_id] += 1
     nk = 0
-    for k, value in doc_appearence.items():
+    
+    for dic_items in doc_appearence.items():
         nk += 1
     for line in group:
         doc_id, tf = line.partition("\t")[2].split()
