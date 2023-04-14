@@ -103,10 +103,10 @@ def get_hits():
                 result=term_dic[query_term]
                 idf=result["idf"]
                 docidlist=result["rest"][0::3]
-                docindex=docidlist.index(doc)
+                docindex=docidlist.index(str(doc))
                 tfindex=docindex*3+1
                 tfI=result["rest"][tfindex]
-                doc_vector[doc].append(idf*tfI)
+                doc_vector[doc].append(float(idf)*float(tfI))
             else:
                 print("conflict, checpoint 106")        
                     
@@ -114,14 +114,14 @@ def get_hits():
     qd_dot_list={}
     for doc in (docs_intersection):
         sum=0
-        for q in range(len(query_list)):
-            sum+=query_list[q]*doc_vector[doc][q]
+        for q in range(len(query_vector)):
+            sum+=float(query_vector[q])*float(doc_vector[doc][q])
         qd_dot_list[doc]=sum
     
     # TODO: compute q_norm
     sum=0
     for q in query_vector:
-        sum+=q*q
+        sum+=float(q)*float(q)
     q_norm=math.sqrt(sum)
                 
     # TODO: fetch normalization factor
@@ -131,24 +131,24 @@ def get_hits():
             if query_term in term_dic:
                 result=term_dic[query_term]
                 docidlist=result["rest"][0::3]
-                docindex=docidlist.index(doc)
-                nfindex=doc*3+2
+                docindex=docidlist.index(str(doc))
+                nfindex=docindex*3+2
                 doc_nf_list[doc]=result["rest"][nfindex]
                 break
     # TODO: compute tf-idf
     tfIdf=defaultdict(float)
     for doc in docs_intersection:
-        tfIdf[doc]=qd_dot_list[doc]/(q_norm*doc_nf_list[doc])
+        tfIdf[doc]=float(qd_dot_list[doc])/(q_norm*float(doc_nf_list[doc]))
                     
     # TODO: weighted score
     scorelist={}
     for doc in docs_intersection:
-        scorelist[doc] = float(weight* pageRanks(doc) +(1-weight) *tfIdf[doc])               
+        scorelist[doc] = float(weight)*float(pageRanks[doc]) + (1-float(weight))*float(tfIdf[doc])      
     sorted_score_list= dict(sorted(scorelist.items(), key=lambda item: item[1],reverse=True))       
     context={}
     context["hits"]=[]
     for key,value in sorted_score_list.items():
-        context.append({"docid":key,
+        context["hits"].append({"docid":key,
                        "score":value
             })
     return flask.jsonify(**context), 200
