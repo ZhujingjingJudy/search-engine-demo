@@ -138,7 +138,7 @@ def get_hits():
     # TODO: compute tf-idf
     tfIdf=defaultdict(float)
     for doc in docs_intersection:
-        tfIdf[doc]=float(qd_dot_list[doc])/(q_norm*float(doc_nf_list[doc]))
+        tfIdf[doc]=float(qd_dot_list[doc])/(q_norm*math.sqrt(float(doc_nf_list[doc])))
                     
     # TODO: weighted score
     scorelist={}
