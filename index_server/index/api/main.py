@@ -68,7 +68,7 @@ def get_hits():
             line.strip()
             line=line.split()
             term_dic[line[0]]={"idf":line[1],
-                               "rest": line[2,:]}
+                               "rest": [line[2:]]}
     query_vector=[]
     for query_term in query_list:
         if query_term in term_dic:
