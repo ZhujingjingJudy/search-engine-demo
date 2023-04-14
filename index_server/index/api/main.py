@@ -6,7 +6,6 @@ import re
 import os
 import flask
 import index
-
 gStopWordsList = set()
 pageRanks = {}
 
@@ -57,9 +56,10 @@ def get_hits():
     query_list = [term for term in query if term not in gStopWordsList]
     print(query_list)
     
-    #TODO: calculation
+    # TODO: calculation
     # -1 query vector
     #    -1 look up value for each term
+    # FIXME: what about repeated query terms
     term_dic={}
     path="index/inverted_index"
     with open(
@@ -82,8 +82,6 @@ def get_hits():
     
     
     docs_include_term=defaultdict(set)
-    # for key,value in pageRanks.items():
-    # # key = doc_id, value = pagerank for this doc_id
     for query_term in query_list:
         if query_term in term_dic:
             result=term_dic[query_term]
@@ -93,13 +91,92 @@ def get_hits():
         else:
             docs_include_term[query_term]=set()
             
-    doc_vector=[None]*(len(pageRanks))
-    for query_term in query_list:
-        if query_term in term_dic:
-            result=term_dic[query_term]
-            idf=float(result["idf"])
+    # find union document containing all the term
+    docs_intersection=set()
+    for doc in docs_include_term.values():
+        docs_intersection=docs_intersection.intersection(doc)
             
-            
+    doc_vector={}
+    for doc in docs_intersection:
+        # this doc contains all the query term
+        doc_vector[doc]=[]
+        for query_term in query_list:
+            if query_term in term_dic:
+                result=term_dic[query_term]
+                idf=result["idf"]
+                docidlist=result["rest"][0::3]
+                docindex=docidlist.index(doc)
+                tfindex=doc*3+1
+                tfI=result["rest"][tfindex]
+                doc_vector[doc].append(idf*tfI)
+            else:
+                print("conflict, checpoint 106")        
+    # for i in range((len(pageRanks))):
+    #     doc_vector[i]=[]
+    #     if i in union_docs:
+    #         for query_term in query_list:
+    #             if query_term in term_dic:
+    #                 result=term_dic[query_term]
+    #                 idf=float(result["idf"])
+    #                 # term may appear in doc-i
+    #                 docidList=result["rest"][0::3]
+    #                 if i in docidList:
+    #                     index_i=result["rest"].index(i)
+    #                     index_i+=1
+    #                     tf=result["rest"][index_i]
+    #                     doc_vector[i].append(tf*idf)
+    #                 else:
+    #                     # doc_id = i, not contain this query_term  
+    #                     doc_vector[i].append(0)
+    #             else:
+    #                 # none of doc contain this query_term
+    #                 doc_vector[i].append(0)
+    #     else:
+    #         # none of doc contain any of query_term, all tf=0
+    #         doc_vector[i]=[0]*len(query_list)
+                    
+    # TODO: compute tf-idf
+    qd_dot_list={}
+    for doc in (docs_intersection):
+        sum=0
+        for q in range(len(query_list)):
+            sum+=query_list[q]*doc_vector[doc][q]
+        qd_dot_list[doc]=sum
+    
+    # TODO: compute q_norm
+    sum=0
+    for q in query_vector:
+        sum+=q*q
+    q_norm=math.sqrt(q_norm)
+                
+    # TODO: fetch normalization factor
+    doc_nf_list={}
+    for doc in docs_intersection:
+        for query_term in query_list:
+            if query_term in term_dic:
+                result=term_dic[query_term]
+                docidlist=result["rest"][0::3]
+                docindex=docidlist.index(doc)
+                nfindex=doc*3+2
+                doc_nf_list[doc]=result["rest"][nfindex]
+                break
+    # TODO: compute tf-idf
+    tfIdf=defaultdict(float)
+    for doc in docs_intersection:
+        tfIdf[doc]=qd_dot_list[doc]/(q_norm*doc_nf_list[doc])
+                    
+    # TODO: weighted score
+    scorelist={}
+    for doc in docs_intersection:
+        scorelist[doc] = float(weight* pageRanks(doc) +(1-weight) *tfIdf[doc])               
+    sorted_score_list= dict(sorted(scorelist.items(), key=lambda item: item[1],reverse=True))       
+    context={}
+    context["hits"]=[]
+    for key,value in sorted_score_list.items():
+        context.append{"docid":key,
+                       "score":value
+            }
+    return flask.jsonify(**context), 200
             
                 
          
