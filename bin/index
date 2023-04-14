@@ -1,0 +1,82 @@
+#!/bin/bash
+# index server
+
+
+# Stop on errors
+# See https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+set -Eeuo pipefail
+set -x
+
+# Sanity check command line options
+usage() {
+  echo "Usage: $0 (start|stop|restart|status)"
+}
+
+
+if [ $# -ne 1 ]; then
+  usage
+  exit 1
+fi
+
+
+# Parse argument.  $1 is the first argument
+case $1 in
+  "start")
+    if pgrep -f "flask --app index run --host 0.0.0.0 --port 9000" >/dev/null || \
+       pgrep -f "flask --app index run --host 0.0.0.0 --port 9001" >/dev/null || \
+       pgrep -f "flask --app index run --host 0.0.0.0 --port 9002" >/dev/null
+    then
+       echo "Error: index server is already running"
+       exit 1
+    fi
+    echo "starting index server ..."
+    mkdir -p var/log
+    rm -f var/log/index.log
+    INDEX_PATH="inverted_index_0.txt" flask --app index run --host 0.0.0.0 --port 9000 >> var/log/index.log 2>&1 &
+    INDEX_PATH="inverted_index_1.txt" flask --app index run --host 0.0.0.0 --port 9001 >> var/log/index.log 2>&1 &
+    INDEX_PATH="inverted_index_2.txt" flask --app index run --host 0.0.0.0 --port 9002 >> var/log/index.log 2>&1 &
+    ;;
+
+
+  "stop")
+    echo "stopping index server ..."
+    pkill -f "flask --app index run --host 0.0.0.0 --port 9000" || true
+    pkill -f "flask --app index run --host 0.0.0.0 --port 9001" || true
+    pkill -f "flask --app index run --host 0.0.0.0 --port 9002" || true
+    ;;
+
+
+  "restart")
+    echo "stopping index server ..."
+    pkill -f "flask --app index run --host 0.0.0.0 --port 9000" || true
+    pkill -f "flask --app index run --host 0.0.0.0 --port 9001" || true
+    pkill -f "flask --app index run --host 0.0.0.0 --port 9002" || true
+    echo "starting index server ..."
+    mkdir -p var/log
+    rm -f var/log/index.log
+    INDEX_PATH="inverted_index_0.txt" flask --app index run --host 0.0.0.0 --port 9000 >> var/log/index.log 2>&1 &
+    INDEX_PATH="inverted_index_1.txt" flask --app index run --host 0.0.0.0 --port 9001 >> var/log/index.log 2>&1 &
+    INDEX_PATH="inverted_index_2.txt" flask --app index run --host 0.0.0.0 --port 9002 >> var/log/index.log 2>&1 &
+    ;;
+
+    "status")
+    set +o pipefail
+    NPROCS=$(pgrep -f "flask --app index run --host 0.0.0.0 --port 900[0-2]" | wc -l)
+    set -o pipefail
+    if [ "$NPROCS" -eq 3 ]; then
+        echo "index server running"
+        exit
+    elif [ "$NPROCS" -eq 0 ]; then
+        echo "index server stopped"
+        exit 1
+    else
+        echo "index server error: found ${NPROCS} processes, expected 3"
+        exit 2
+    fi
+    ;;
+
+  *)
+    usage
+    exit 1
+    ;;
+esac
