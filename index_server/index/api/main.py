@@ -59,8 +59,8 @@ def get_hits():
     
     #TODO: calculation
     # -1 query vector
-    #    -1 look up  idf value for each page
-    term_lookup_idf={}
+    #    -1 look up value for each term
+    term_dic={}
     path="index/inverted_index"
     with open(
         Path(path)/Path(index.app.config["INDEX_PATH"]),
@@ -69,10 +69,27 @@ def get_hits():
         for line in lines:
             line.strip()
             line=line.split()
-            term_lookup_idf[line[0]]={"idf":line[1],
+            term_dic[line[0]]={"idf":line[1],
                                       "doc_id":line[2],
                                       "tf":line[3],
                                       "nf":line[4]}
+    query_vector=[]
+    for query_term in query_list:
+        if query_term in term_dic:
+            result=term_dic[query_term]   
+            value=query_list.count(query_term)*result["idf"]
+            query_vector.append(value)
+        else:
+            query_vector.append(0)
+    
+    doc_vector=[None]*(len(pageRanks))
+    for key,value in pageRanks.items():
+    # key = doc_id, value = pagerank for this doc_id
+         
+
+        
+    
+    
             
         
             
