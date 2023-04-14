@@ -17,9 +17,7 @@ def index_load():
         "index_server/index/stopwords.txt", "r", encoding="UTF-8"
     ) as file:
         global gStopWordsList
-        for line in file.readlines():
-            word = line.strip()
-            gStopWordsList = set(word)
+        gStopWordsList = set(word.strip() for word in file.readlines())
     file.close()
 
     with open("index_server/index/pagerank.out", "r", encoding="UTF-8") as file:
@@ -67,8 +65,9 @@ def get_hits():
         for line in lines:
             line.strip()
             line=line.split()
-            term_dic[line[0]]={"idf":line[1],
-                               "rest": line[2:]}
+            if line[0] in query_list:
+                term_dic[line[0]]={"idf":line[1],
+                                "rest": line[2:]}
     query_vector=[]
     for query_term in query_list:
         if query_term in term_dic:
@@ -78,6 +77,8 @@ def get_hits():
         else:
             query_vector.append(0)
     
+    print(query_vector)
+    print(term_dic)
     
     docs_include_term=defaultdict(set)
     for query_term in query_list:
@@ -90,10 +91,9 @@ def get_hits():
             docs_include_term[query_term]=set()
             
     # find union document containing all the term
-    docs_intersection=set()
-    for doc in docs_include_term.values():
-        docs_intersection=docs_intersection.intersection(doc)
-            
+    docs_intersection=set.intersection(*[doc for doc in docs_include_term.values()])
+
+    print(docs_intersection) 
     doc_vector={}
     for doc in docs_intersection:
         # this doc contains all the query term
