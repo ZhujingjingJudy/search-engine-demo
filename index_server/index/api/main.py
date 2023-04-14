@@ -6,15 +6,13 @@ import re
 import os
 import flask
 import index
+from index import app
 gStopWordsList = set()
 pageRanks = {}
 
 
 def index_load():
     """Load data from file"""
-    index.app.config["INDEX_PATH"] = os.getenv(
-        "INDEX_PATH", "inverted_index_1.txt"
-    )
     with open(
         "index_server/index/stopwords.txt", "r", encoding="UTF-8"
     ) as file:
@@ -30,6 +28,7 @@ def index_load():
             line = line.strip()
             page_id, pagerank = line.split(",")
             pageRanks[int(page_id)] = float(pagerank)
+            
     file.close()
 
 
@@ -61,9 +60,9 @@ def get_hits():
     #    -1 look up value for each term
     # FIXME: what about repeated query terms
     term_dic={}
-    path="index/inverted_index"
+    path="index_server/index/inverted_index"
     with open(
-        Path(path)/Path(index.app.config["INDEX_PATH"]),
+        Path(path) / Path(app.config["INDEX_PATH"]),
         'r',"encoding=UTF-8") as f:
         lines=f.readlines()
         for line in lines:
