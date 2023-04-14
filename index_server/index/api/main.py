@@ -104,34 +104,11 @@ def get_hits():
                 idf=result["idf"]
                 docidlist=result["rest"][0::3]
                 docindex=docidlist.index(doc)
-                tfindex=doc*3+1
+                tfindex=docindex*3+1
                 tfI=result["rest"][tfindex]
                 doc_vector[doc].append(idf*tfI)
             else:
                 print("conflict, checpoint 106")        
-    # for i in range((len(pageRanks))):
-    #     doc_vector[i]=[]
-    #     if i in union_docs:
-    #         for query_term in query_list:
-    #             if query_term in term_dic:
-    #                 result=term_dic[query_term]
-    #                 idf=float(result["idf"])
-    #                 # term may appear in doc-i
-    #                 docidList=result["rest"][0::3]
-    #                 if i in docidList:
-    #                     index_i=result["rest"].index(i)
-    #                     index_i+=1
-    #                     tf=result["rest"][index_i]
-    #                     doc_vector[i].append(tf*idf)
-    #                 else:
-    #                     # doc_id = i, not contain this query_term  
-    #                     doc_vector[i].append(0)
-    #             else:
-    #                 # none of doc contain this query_term
-    #                 doc_vector[i].append(0)
-    #     else:
-    #         # none of doc contain any of query_term, all tf=0
-    #         doc_vector[i]=[0]*len(query_list)
                     
     # TODO: compute tf-idf
     qd_dot_list={}
