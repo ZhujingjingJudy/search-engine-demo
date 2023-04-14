@@ -70,21 +70,38 @@ def get_hits():
             line.strip()
             line=line.split()
             term_dic[line[0]]={"idf":line[1],
-                                      "doc_id":line[2],
-                                      "tf":line[3],
-                                      "nf":line[4]}
+                               "rest": line[2,:]}
     query_vector=[]
     for query_term in query_list:
         if query_term in term_dic:
             result=term_dic[query_term]   
-            value=query_list.count(query_term)*result["idf"]
+            value=query_list.count(query_term)*float(result["idf"])
             query_vector.append(value)
         else:
             query_vector.append(0)
     
+    
+    docs_include_term=defaultdict(set)
+    # for key,value in pageRanks.items():
+    # # key = doc_id, value = pagerank for this doc_id
+    for query_term in query_list:
+        if query_term in term_dic:
+            result=term_dic[query_term]
+            for index,val in enumerate(result["rest"]):
+                if index%3==0:
+                    docs_include_term[query_term].add(int(val))
+        else:
+            docs_include_term[query_term]=set()
+            
     doc_vector=[None]*(len(pageRanks))
-    for key,value in pageRanks.items():
-    # key = doc_id, value = pagerank for this doc_id
+    for query_term in query_list:
+        if query_term in term_dic:
+            result=term_dic[query_term]
+            idf=float(result["idf"])
+            
+            
+            
+                
          
 
         
