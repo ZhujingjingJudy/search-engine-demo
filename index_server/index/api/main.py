@@ -61,9 +61,8 @@ def get_hits():
     # FIXME: what about repeated query terms
     term_dic={}
     path="index_server/index/inverted_index"
-    with open(
-        Path(path) / Path(app.config["INDEX_PATH"]),
-        'r',"encoding=UTF-8") as f:
+    index_path = os.path.join(path, app.config["INDEX_PATH"])
+    with open(index_path, "r", encoding="UTF-8") as f:
         lines=f.readlines()
         for line in lines:
             line.strip()
