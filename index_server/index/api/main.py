@@ -68,7 +68,7 @@ def get_hits():
             line.strip()
             line=line.split()
             term_dic[line[0]]={"idf":line[1],
-                               "rest": [line[2:]]}
+                               "rest": line[2:]}
     query_vector=[]
     for query_term in query_list:
         if query_term in term_dic:
@@ -145,7 +145,7 @@ def get_hits():
     sum=0
     for q in query_vector:
         sum+=q*q
-    q_norm=math.sqrt(q_norm)
+    q_norm=math.sqrt(sum)
                 
     # TODO: fetch normalization factor
     doc_nf_list={}
