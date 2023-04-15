@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Reduce 1.
-"""
+"""Reduce 1."""
 import sys
 import itertools
 import re
@@ -9,7 +7,7 @@ import re
 
 def reduce_one_group(key, group):
     """Reduce one group."""
-    combined =""
+    combined = ""
     for line in group:
         txt = line.partition("\t")[2]
         title = txt.partition("\t")[0]
@@ -18,7 +16,7 @@ def reduce_one_group(key, group):
         combined = re.sub(r"[^a-zA-Z0-9 ]+", "", combined)
         combined = combined.casefold()
         combined = combined.split()
-        with open('stopwords.txt', 'r') as word_file:
+        with open('stopwords.txt', 'r', encoding='utf-8') as word_file:
             stop_words = [line.partition("\n")[0] for line in word_file]
         newcombined = [term for term in combined if term not in stop_words]
     print(f"{key}\t{newcombined}")

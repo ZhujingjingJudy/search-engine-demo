@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Map 5. Calculate |di|"""
+"""Map 5. Calculate |di|."""
 import sys
 
 for line in sys.stdin:

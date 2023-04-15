@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-"""
-Reduce 5.
-"""
+"""Reduce 5."""
 import sys
 import itertools
-import math
 
 
 def reduce_one_group(key, group):
@@ -12,11 +9,11 @@ def reduce_one_group(key, group):
     group = list(group)
     norfac = 0
     for line in group:
-        term, tf, idf, wik = line.partition("\t")[2].split()
+        term, tfi, idf, wik = line.partition("\t")[2].split()
         norfac += float(wik) ** 2
     for line in group:
-        term, tf, idf, wik = line.partition("\t")[2].split()
-        print(f"{term}\t{idf} {key} {tf} {norfac}")
+        term, tfi, idf, wik = line.partition("\t")[2].split()
+        print(f"{term}\t{idf} {key} {tfi} {norfac}")
 
 
 def keyfunc(line):

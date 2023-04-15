@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""
-Reduce 3.
-"""
+"""Reduce 3."""
 import sys
 import itertools
 import collections
+
 
 def reduce_one_group(key, group):
     """Reduce one group."""
@@ -12,15 +11,15 @@ def reduce_one_group(key, group):
     # print("Group:", group)
     doc_appearence = collections.defaultdict(int)
     for line in group:
-        doc_id, tf = line.partition("\t")[2].split()
+        doc_id, tf_index = line.partition("\t")[2].split()
         doc_appearence[doc_id] += 1
-    nk = 0
-    
-    for dic_items in doc_appearence.items():
-        nk += 1
+    nk_index = len(doc_appearence)
+
+    # for dic_items in doc_appearence.items():
+    #     nk_index += 1
     for line in group:
-        doc_id, tf = line.partition("\t")[2].split()
-        print(f"{key}\t{doc_id} {tf} {nk}")
+        doc_id, tf_index = line.partition("\t")[2].split()
+        print(f"{key}\t{doc_id} {tf_index} {nk_index}")
 
 
 def keyfunc(line):

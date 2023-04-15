@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Map 6. segment"""
+"""Map 6. segment."""
 import sys
 
 for line in sys.stdin:

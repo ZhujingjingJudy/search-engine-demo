@@ -1,5 +1,4 @@
-"""API function"""
-from pathlib import Path
+"""API function."""
 from collections import defaultdict
 import math
 import re
@@ -7,32 +6,32 @@ import os
 import flask
 import index
 from index import app
-gStopWordsList = set()
-pageRanks = {}
 
 
 def index_load():
-    """Load data from file"""
+    """Load data from file."""
+    stopwords_list = set()
+    page_ranks = {}
     with open(
         "index_server/index/stopwords.txt", "r", encoding="UTF-8"
     ) as file:
-        global gStopWordsList
-        gStopWordsList = set(word.strip() for word in file.readlines())
+        stopwords_list = set(query_term.strip()
+                             for query_term in file.readlines())
     file.close()
 
-    with open("index_server/index/pagerank.out", "r", encoding="UTF-8") as file:
-        global pageRanks
-        for line in file.readlines():
-            line = line.strip()
-            page_id, pagerank = line.split(",")
-            pageRanks[int(page_id)] = float(pagerank)
-            
+    with open("index_server/index/pagerank.out",
+              "r", encoding="UTF-8") as file:
+        for query_term in file.readlines():
+            query_term = query_term.strip()
+            i, temp = query_term.split(",")
+            page_ranks[int(i)] = float(temp)
     file.close()
+    return page_ranks, stopwords_list
 
 
 @index.app.route("/api/v1/", methods=["GET"])
 def get_page():
-    """Simple page."""
+    """Get page."""
     context = {"hits": "/api/v1/hits",
                "url": "/api/v1/"
                }
@@ -41,114 +40,89 @@ def get_page():
 
 @index.app.route("/api/v1/hits/", methods=["GET"])
 def get_hits():
-    """Query hit calc"""
+    """Query hit calc."""
+    page_ranks, stopwords_list = index_load()
     query = flask.request.args.get('q')
     weight = flask.request.args.get('w', default=0.5)
 
-    # TODO: clean the query
+    # Done: clean the query
     query = query.strip()
     query = re.sub(r"[^a-zA-Z0-9 ]+", "", query)
-    query = query.casefold()
-    query = query.split()
-    query_list = [term for term in query if term not in gStopWordsList]
-    print(query_list)
-    
-    # TODO: calculation
+    query = query.casefold().split()
+    query = [query_term for query_term in query
+             if query_term not in stopwords_list]
+
+    # Done: calculation
     # -1 query vector
     #    -1 look up value for each term
-    # FIXME: what about repeated query terms
-    term_dic={}
-    path="index_server/index/inverted_index"
-    index_path = os.path.join(path, app.config["INDEX_PATH"])
-    with open(index_path, "r", encoding="UTF-8") as f:
-        lines=f.readlines()
-        for line in lines:
-            line.strip()
-            line=line.split()
-            if line[0] in query_list:
-                term_dic[line[0]]={"idf":line[1],
-                                "rest": line[2:]}
-    query_vector=[]
-    for query_term in query_list:
-        if query_term in term_dic:
-            result=term_dic[query_term]   
-            value=query_list.count(query_term)*float(result["idf"])
-            query_vector.append(value)
-        else:
-            query_vector.append(0)
-    
-    print(query_vector)
-    print(term_dic)
-    
-    docs_include_term=defaultdict(set)
-    for query_term in query_list:
-        if query_term in term_dic:
-            result=term_dic[query_term]
-            for index,val in enumerate(result["rest"]):
-                if index%3==0:
-                    docs_include_term[query_term].add(int(val))
-        else:
-            docs_include_term[query_term]=set()
-            
-    # find union document containing all the term
-    docs_intersection=set.intersection(*[doc for doc in docs_include_term.values()])
+    term_dic = {}
+    with open(os.path.join("index_server/index/inverted_index",
+                           app.config["INDEX_PATH"]),
+              "r", encoding="UTF-8") as file:
+        temp = file.readlines()
+        term_dic = {i[0]: {"idf": i[1], "rest": i[2:]}
+                    for i in (i.split(" ") for i in temp) if i[0] in query}
 
-    print(docs_intersection) 
-    doc_vector={}
+    query_vector = [query.count(query_term)*float(term_dic[query_term]["idf"])
+                    if query_term in term_dic else 0 for query_term in query]
+
+    doc = {query_term: {int(temp)
+                        for i, temp in enumerate(term_dic[query_term]["rest"])
+                        if i % 3 == 0}
+           if query_term in term_dic else set() for query_term in query}
+
+    # find union document containing all the term
+    docs_intersection = set.intersection(
+        *[doc[i] for i in doc])
+
+    score_list = defaultdict(list)
     for doc in docs_intersection:
         # this doc contains all the query term
-        doc_vector[doc]=[]
-        for query_term in query_list:
+        for query_term in query:
             if query_term in term_dic:
-                result=term_dic[query_term]
-                idf=result["idf"]
-                docidlist=result["rest"][0::3]
-                docindex=docidlist.index(str(doc))
-                tfindex=docindex*3+1
-                tfI=result["rest"][tfindex]
-                doc_vector[doc].append(float(idf)*float(tfI))
+                score_list[doc].append(float(
+                    term_dic[query_term]["idf"])*float(
+                    term_dic[query_term]["rest"][(
+                        term_dic[query_term]["rest"][0::3].index(str(doc))
+                        )*3+1]))
             else:
-                print("conflict, checpoint 106")        
-                    
-    # TODO: compute tf-idf
-    qd_dot_list={}
+                print("conflict, checpoint 106")
+
+    # compute tf-idf
+    qd_dot_list = {}
     for doc in (docs_intersection):
-        sum=0
-        for q in range(len(query_vector)):
-            sum+=float(query_vector[q])*float(doc_vector[doc][q])
-        qd_dot_list[doc]=sum
-    
-    # TODO: compute q_norm
-    sum=0
-    for q in query_vector:
-        sum+=float(q)*float(q)
-    q_norm=math.sqrt(sum)
-                
-    # TODO: fetch normalization factor
-    doc_nf_list={}
+        temp = 0
+        for i, query_term in enumerate(query_vector):
+            temp += float(query_term)*float(score_list[doc][i])
+        qd_dot_list[doc] = temp
+
+    # compute q_norm
+    temp = sum(float(i) * float(i) for i in query_vector)
+
+    # fetch normalization factor
+    i = {}
     for doc in docs_intersection:
-        for query_term in query_list:
+        for query_term in query:
             if query_term in term_dic:
-                result=term_dic[query_term]
-                docidlist=result["rest"][0::3]
-                docindex=docidlist.index(str(doc))
-                nfindex=docindex*3+2
-                doc_nf_list[doc]=result["rest"][nfindex]
-                break
-    # TODO: compute tf-idf
-    tfIdf=defaultdict(float)
+                i[doc] = term_dic[query_term]["rest"][(
+                    term_dic[query_term]["rest"][0::3].index(str(doc)))*3+2]
+    # compute tf-idf
+    query_vector = {}
     for doc in docs_intersection:
-        tfIdf[doc]=float(qd_dot_list[doc])/(q_norm*math.sqrt(float(doc_nf_list[doc])))
-                    
-    # TODO: weighted score
-    scorelist={}
+        query_vector[doc] = float(qd_dot_list[doc]) / \
+            (math.sqrt(temp)*math.sqrt(float(i[doc])))
+
+    # weighted score
+    score_list = {}
     for doc in docs_intersection:
-        scorelist[doc] = float(weight)*float(pageRanks[doc]) + (1-float(weight))*float(tfIdf[doc])      
-    sorted_score_list= dict(sorted(scorelist.items(), key=lambda item: item[1],reverse=True))       
-    context={}
-    context["hits"]=[]
-    for key,value in sorted_score_list.items():
-        context["hits"].append({"docid":key,
-                       "score":value
-            })
-    return flask.jsonify(**context), 200
+        score_list[doc] = float(weight)*float(page_ranks[doc]) + \
+            (1-float(weight))*float(query_vector[doc])
+    score_list = dict(
+        sorted(score_list.items(), key=lambda item: item[1], reverse=True))
+    doc = {}
+    doc["hits"] = []
+    for i, temp in score_list.items():
+        doc["hits"].append({"docid": i,
+                            "score": temp
+                            })
+    return flask.jsonify(**doc), 200

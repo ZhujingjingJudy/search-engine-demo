@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Map 4. Calculate wik"""
+"""Map 4. Calculate wik."""
 import sys
 
 for line in sys.stdin:
