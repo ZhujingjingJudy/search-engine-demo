@@ -4,7 +4,6 @@ import heapq
 import flask
 import search
 import requests
-from search.config import SEARCH_INDEX_SEGMENT_API_URLS
 
 
 @search.app.route('/', methods=['GET'])
@@ -21,7 +20,8 @@ def page():
                    'initial': initial, "query": "", "pagerank": 0.5}
         return flask.render_template("index.html", **context)
     initial = False
-    results = [[] for _ in range(len(SEARCH_INDEX_SEGMENT_API_URLS))]
+    results = [[] for _ in
+               range(len(search.app.config["SEARCH_INDEX_SEGMENT_API_URLS"]))]
     thread0 = threading.Thread(target=connect_index,
                                args=(query, pagerank, 0, results))
     thread1 = threading.Thread(target=connect_index,
@@ -64,7 +64,8 @@ def page():
 def connect_index(qes, wid, index, results):
     """Connect index."""
     # url_param = {'q': q, 'w': w}
-    url = f"{SEARCH_INDEX_SEGMENT_API_URLS[index]}?q={qes}&w={wid}"
+    api_url = search.app.config['SEARCH_INDEX_SEGMENT_API_URLS'][index]
+    url = f"{api_url}?q={qes}&w={wid}"
     res = ""
     if qes != "":
         respond = requests.get(url, timeout=5)
