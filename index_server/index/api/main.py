@@ -51,7 +51,7 @@ def get_hits():
     query = query.casefold().split()
     query = [query_term for query_term in query
              if query_term not in stopwords_list]
-
+    query_set = sorted(set(query), key=query.index)
     # Done: calculation
     # -1 query vector
     #    -1 look up value for each term
@@ -61,15 +61,16 @@ def get_hits():
               "r", encoding="UTF-8") as file:
         temp = file.readlines()
         term_dic = {i[0]: {"idf": i[1], "rest": i[2:]}
-                    for i in (i.split(" ") for i in temp) if i[0] in query}
+                    for i in (i.split(" ") for i in temp) if i[0] in query_set}
 
     query_vector = [query.count(query_term)*float(term_dic[query_term]["idf"])
-                    if query_term in term_dic else 0 for query_term in query]
+                    if query_term in term_dic else 0
+                    for query_term in query_set]
 
     doc = {query_term: {int(temp)
                         for i, temp in enumerate(term_dic[query_term]["rest"])
                         if i % 3 == 0}
-           if query_term in term_dic else set() for query_term in query}
+           if query_term in term_dic else set() for query_term in query_set}
 
     # find union document containing all the term
     docs_intersection = set.intersection(
@@ -78,13 +79,13 @@ def get_hits():
     score_list = defaultdict(list)
     for doc in docs_intersection:
         # this doc contains all the query term
-        for query_term in query:
+        for query_term in query_set:
             if query_term in term_dic:
                 score_list[doc].append(float(
                     term_dic[query_term]["idf"])*float(
                     term_dic[query_term]["rest"][(
                         term_dic[query_term]["rest"][0::3].index(str(doc))
-                        )*3+1]))
+                    )*3+1]))
             else:
                 print("conflict, checpoint 106")
 
@@ -102,7 +103,7 @@ def get_hits():
     # fetch normalization factor
     i = {}
     for doc in docs_intersection:
-        for query_term in query:
+        for query_term in query_set:
             if query_term in term_dic:
                 i[doc] = term_dic[query_term]["rest"][(
                     term_dic[query_term]["rest"][0::3].index(str(doc)))*3+2]
